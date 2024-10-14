@@ -1,62 +1,68 @@
-// src/components/Events.jsx
-
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const Events = () => {
-  const [events, setEvents] = useState([]);
-  const [newEvent, setNewEvent] = useState({ name: '', date: '' });
+    const [events, setEvents] = useState([]);
+    const [eventName, setEventName] = useState('');
+    const [eventId, setEventId] = useState(null);
 
-  useEffect(() => {
     const fetchEvents = async () => {
-      try {
-        const response = await axios.get('/api/events'); // URL ของ API
+        const response = await axios.get('http://localhost:3000/events');
         setEvents(response.data);
-      } catch (error) {
-        console.error('Error fetching events:', error);
-      }
     };
-    fetchEvents();
-  }, []);
 
-  const handleAddEvent = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post('/api/events', newEvent);
-      setEvents([...events, response.data]);  // เพิ่มกิจกรรมใหม่ลงในลิสต์
-      setNewEvent({ name: '', date: '' });    // รีเซ็ตฟอร์ม
-    } catch (error) {
-      console.error('Error adding event:', error);
-    }
-  };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (eventId) {
+            await axios.put(`http://localhost:3000/events/${eventId}`, { name: eventName });
+        } else {
+            await axios.post('http://localhost:3000/events', { name: eventName });
+        }
+        setEventName('');
+        setEventId(null);
+        fetchEvents();
+    };
 
-  return (
-    <div>
-      <h2>กิจกรรม</h2>
-      <ul>
-        {events.map((event) => (
-          <li key={event.id}>{event.name} - {event.date}</li>
-        ))}
-      </ul>
+    const handleEdit = (event) => {
+        setEventId(event.id);
+        setEventName(event.name);
+    };
 
-      <form onSubmit={handleAddEvent}>
-        <input
-          type="text"
-          value={newEvent.name}
-          onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
-          placeholder="ชื่อกิจกรรม"
-          required
-        />
-        <input
-          type="date"
-          value={newEvent.date}
-          onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-          required
-        />
-        <button type="submit">เพิ่มกิจกรรม</button>
-      </form>
-    </div>
-  );
+    const handleDelete = async (id) => {
+        await axios.delete(`http://localhost:3000/events/${id}`);
+        fetchEvents();
+    };
+
+    useEffect(() => {
+        fetchEvents();
+    }, []);
+
+    return (
+        <div>
+            <h2>Events</h2>
+            <form onSubmit={handleSubmit}>
+                <input
+                    type="text"
+                    value={eventName}
+                    onChange={(e) => setEventName(e.target.value)}
+                    placeholder="Event Name"
+                    required
+                />
+                <button type="submit">{eventId ? 'Update' : 'Create'}</button>
+            </form>
+            <ul>
+                {events.map((event) => (
+                    <li key={event.id}>
+                        {event.name}
+                        <div>
+                            <button onClick={() => handleEdit(event)}>Edit</button>
+                            <button onClick={() => handleDelete(event.id)}>Delete</button>
+                        </div>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
 };
 
 export default Events;
