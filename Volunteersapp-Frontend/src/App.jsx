@@ -1,4 +1,4 @@
-// src/App.jsx
+// src/App.jsx --
 import React from 'react';
 import Events from './Events';
 import HoursLogged from './HoursLogged';
